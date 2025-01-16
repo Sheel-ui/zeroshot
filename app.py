@@ -1,11 +1,61 @@
 from pathlib import Path
 import pyarrow.parquet as pq
 import pandas as pd
+import traceback
+import cv2
 
-VIDEO_LEN = 6
+VIDEO_LEN = 1
 DATA_PATH = 'data/20250116_021605'
+def skip_frames_and_save_new_video(input_video_path, output_video_path, skip_count=100):
+    # Open the input video file
+    video_capture = cv2.VideoCapture(input_video_path)
+    
+    if not video_capture.isOpened():
+        print("Error: Could not open video.")
+        return
+    
+    # Get the video's frame rate (fps) and frame size
+    fps = video_capture.get(cv2.CAP_PROP_FPS)
+    frame_width = int(video_capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(video_capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    
+    # Create a VideoWriter object to save the new video
+    fourcc = cv2.VideoWriter_fourcc(*'XVID')  # You can change this codec if needed
+    video_writer = cv2.VideoWriter(output_video_path, fourcc, fps, (frame_width, frame_height))
+    
+    # Skip the first 100 frames
+    video_capture.set(cv2.CAP_PROP_POS_FRAMES, skip_count)
+    
+    while True:
+        # Read the next frame
+        ret, frame = video_capture.read()
+        
+        if not ret:
+            break  # End of video
+        
+        # Write the frame to the new video
+        video_writer.write(frame)
+    
+    # Release resources
+    video_capture.release()
+    video_writer.release()
+    print(f"New video saved as {output_video_path}")
 
-def clean_df(df):
+def get_total_frames(video_path):
+    # Open the video file
+    video_capture = cv2.VideoCapture(video_path)
+    
+    if not video_capture.isOpened():
+        print("Error: Could not open video.")
+        return
+    
+    # Get the total number of frames
+    total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+    
+    video_capture.release()
+    return total_frames
+
+def clean_df(df,name):
     columns = ['timestamp', 'episode_index', 'sensor_type']
     camera_columns = ['frame_index']
     
@@ -16,6 +66,7 @@ def clean_df(df):
     # Cast 'frame_index' to int
     camera_data['frame_index'] = camera_data['frame_index'].astype(int)
     
+    camera_data.to_csv(f"output/camera_data_{name}.csv", index=False)
     # Convert DataFrame to list
     camera_data_list = camera_data[columns + camera_columns].to_dict(orient='records')
     
@@ -30,12 +81,11 @@ def increment_idx(df1, df2):
     return idx-1
 
 def find_anchor(left_df,right_df):
-    left_df.to_csv('output/camera_data_left.csv', index=False)
-    right_df.to_csv('output/camera_data_right.csv', index=False)
+
     anchor = (0,0)
     left_df.to_csv
-    left_df = clean_df(left_df)
-    right_df = clean_df(right_df)
+    left_df = clean_df(left_df,"left")
+    right_df = clean_df(right_df,"right")
     
     if left_df[0]['timestamp']<right_df[0]['timestamp']:
         anchor = (increment_idx(left_df,right_df),0)
@@ -45,7 +95,6 @@ def find_anchor(left_df,right_df):
     # if left_df[left_idx][] 
     print(left_df[anchor[0]],right_df[anchor[1]])
     return anchor
-
 
 def main():
     parquet_file_path = Path(DATA_PATH)
@@ -67,9 +116,22 @@ def main():
             anchor = find_anchor(left_df,right_df)
             print(anchor)
             
+            
+            video_paths = ['data/20250116_021605/1/ego/camera_video.mp4', 'data/20250116_021605/1/left/camera_video.mp4', 'data/20250116_021605/1/right/camera_video.mp4']
+            output_path = 'combined_video.mp4'
+            output_size = (1280, 720)
+            # combine_videos_with_positions(video_paths, output_path, output_size)
             # STEP 2: Modify Parquet
             
-            # STEP 3: Modify info
+            # STEP 3a: Modify info
+            
+            # STEP 3b: skip frames of video based on anchor
+            video_path = 'data/20250116_021605/1/right/camera_video.mp4'
+            output_path = 'output_video.mp4'
+            skip_frames_and_save_new_video(video_path,output_path)
+            print(get_total_frames(video_path))
+            # STEP 3c: Accuracte framepacing for videos
+            
             
             # STEP 4: reconstruct the video
             
@@ -91,6 +153,7 @@ def main():
 
         except Exception as e:
             print(f"Error reading Parquet file: {e}")
+            print(traceback.format_exc())
             return
 
 if __name__ == "__main__":
