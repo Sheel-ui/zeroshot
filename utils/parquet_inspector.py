@@ -41,6 +41,12 @@ def analyze_sensor_data(df):
     pd.set_option('display.width', None)        # Don't wrap wide displays
     pd.set_option('display.float_format', lambda x: '%.9f' % x)  # Show full timestamp precision
     
+    # camera_data = sorted_data[sorted_data['sensor_type'] == 'camera']
+    
+    # camera_data[columns + imu_columns + hall_columns + camera_columns].to_csv('output/camera_data.csv', index=False)
+    
+    # print(camera_data[columns + imu_columns + hall_columns + camera_columns].head(20).to_string())
+    
     print(sorted_data[columns + imu_columns + hall_columns + camera_columns].head(20).to_string())
 
     # Show value ranges
