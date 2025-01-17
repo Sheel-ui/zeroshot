@@ -69,11 +69,11 @@ def get_total_frames_using_ffprobe(video_path):
         print(f"Error with ffprobe: {e}")
         return None
 
-# Example usage
-video_path = 'data/20250116_021605/1/right/camera_video.mp4'
+# # Example usage
+# video_path = 'output_video.mp4'
 
-print(get_total_frames_using_cap_prop(video_path))
-print(get_total_frames_by_iterating(video_path))
-print(get_total_frames_using_seek(video_path))
-print(get_total_frames_using_ffprobe(video_path))
+# print(get_total_frames_using_cap_prop(video_path))
+# print(get_total_frames_by_iterating(video_path))
+# print(get_total_frames_using_seek(video_path))
+# print(get_total_frames_using_ffprobe(video_path))
 # extract_frames_from_video(video_path, output_video_path, start_frame, end_frame)
