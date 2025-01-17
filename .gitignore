@@ -6,3 +6,4 @@ __pycache__
 .junk
 *.mp4
 secret.json
+.DS_Store
