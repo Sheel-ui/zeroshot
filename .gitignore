@@ -1,6 +1,8 @@
 /data
 /output
+/temp
 __pycache__
 .env
 .junk
 *.mp4
+secret.json
